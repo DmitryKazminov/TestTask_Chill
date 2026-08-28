@@ -1,0 +1,129 @@
+using UnityEngine;
+
+public class SimpleCarController : MonoBehaviour
+{
+    [Header("Wheel Colliders")]
+    public WheelCollider frontLeft;
+    public WheelCollider frontRight;
+    public WheelCollider rearLeft;
+    public WheelCollider rearRight;
+
+    [Header("Wheel Meshes")]
+    public Transform frontLeftMesh;
+    public Transform frontRightMesh;
+    public Transform rearLeftMesh;
+    public Transform rearRightMesh;
+
+    [Header("Settings")]
+    public float maxMotorTorque = 2500f;
+    public float maxSteerAngle = 28f;
+    public float brakeForce = 4000f;
+    public float handBrakeForce = 8000f;
+    public float maxSpeedKmh = 100f;
+    public float speedLimitRangeKmh = 5f;
+    public float steeringDeadZone = 0.05f;
+
+    private Rigidbody rb;
+    private bool isPlayerInCar = false;
+
+    private float motorInput;
+    private float steerInput;
+    private bool isHandBraking;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            Debug.LogError("SimpleCarController requires a Rigidbody.", this);
+            enabled = false;
+            return;
+        }
+
+        rb.isKinematic = false;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.centerOfMass = new Vector3(0f, -0.8f, 0f);
+    }
+
+    void Update()
+    {
+        if (!isPlayerInCar) return;
+
+        motorInput = Input.GetAxis("Vertical");
+        steerInput = Input.GetAxis("Horizontal");
+        if (Mathf.Abs(steerInput) < steeringDeadZone)
+            steerInput = 0f;
+        isHandBraking = Input.GetKey(KeyCode.Space);
+    }
+
+    void FixedUpdate()
+    {
+        if (!isPlayerInCar || rb == null || frontLeft == null || frontRight == null || rearLeft == null || rearRight == null)
+            return;
+
+        float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward) * 3.6f;
+
+        float motor = maxMotorTorque * motorInput;
+        if (motorInput > 0f && forwardSpeed > maxSpeedKmh)
+        {
+            float remainingSpeed = Mathf.Clamp01((maxSpeedKmh + speedLimitRangeKmh - forwardSpeed) / speedLimitRangeKmh);
+            motor *= remainingSpeed;
+        }
+
+        rearLeft.motorTorque = motor;
+        rearRight.motorTorque = motor;
+
+        float steer = maxSteerAngle * steerInput;
+        frontLeft.steerAngle = steer;
+        frontRight.steerAngle = steer;
+
+        float brake = isHandBraking ? handBrakeForce : (motorInput == 0 ? brakeForce * 0.3f : 0f);
+
+        ApplyBrake(frontLeft, brake);
+        ApplyBrake(frontRight, brake);
+        ApplyBrake(rearLeft, brake);
+        ApplyBrake(rearRight, brake);
+
+        UpdateWheel(frontLeft, frontLeftMesh);
+        UpdateWheel(frontRight, frontRightMesh);
+        UpdateWheel(rearLeft, rearLeftMesh);
+        UpdateWheel(rearRight, rearRightMesh);
+
+    }
+
+    void ApplyBrake(WheelCollider col, float force)
+    {
+        col.brakeTorque = force;
+    }
+
+    void UpdateWheel(WheelCollider col, Transform mesh)
+    {
+        if (mesh == null || col == null) return;
+
+        Vector3 pos;
+        Quaternion rot;
+        col.GetWorldPose(out pos, out rot);
+
+        mesh.position = pos;
+
+        mesh.rotation = rot * Quaternion.Euler(0f, 0f, 90f);
+    }
+
+    public void SetPlayerInCar(bool value)
+    {
+        isPlayerInCar = value;
+
+        if (!value)
+        {
+            rearLeft.motorTorque = 0;
+            rearRight.motorTorque = 0;
+            frontLeft.brakeTorque = 0;
+            frontRight.brakeTorque = 0;
+            rearLeft.brakeTorque = 0;
+            rearRight.brakeTorque = 0;
+            frontLeft.steerAngle = 0;
+            frontRight.steerAngle = 0;
+        }
+    }
+}
