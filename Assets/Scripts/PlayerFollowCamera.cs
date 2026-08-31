@@ -4,6 +4,7 @@ public class ThirdPersonCamera : MonoBehaviour
 {
     [Header("Target")]
     public Transform target;
+    public UnifiedPlayerEntity playerEntity;
 
     [Header("Settings")]
     public float distance = 5f;
@@ -29,6 +30,9 @@ public class ThirdPersonCamera : MonoBehaviour
 
     void Start()
     {
+        if (playerEntity == null)
+            playerEntity = FindFirstObjectByType<UnifiedPlayerEntity>();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -37,6 +41,12 @@ public class ThirdPersonCamera : MonoBehaviour
 
     void LateUpdate()
     {
+        if (target == null && playerEntity != null)
+            target = playerEntity.GetActiveTarget();
+
+        if (playerEntity != null && target == playerEntity.transform)
+            target = playerEntity.GetActiveTarget();
+
         if (target == null) return;
 
         float currentDistance = isFollowingVehicle ? vehicleDistance : distance;
