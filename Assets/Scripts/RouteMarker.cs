@@ -98,17 +98,17 @@ public class RouteMarker : MonoBehaviour
         switch (type)
         {
             case MarkerType.Start:
-                Debug.Log($"🟢 Start '{name}' достигнут");
+                Debug.Log($"Start '{name}' достигнут");
                 break;
 
             case MarkerType.Finish:
                 if (navigation != null)
                     navigation.CompleteCurrentRoute();
-                Debug.Log($"🏁 Finish '{name}' достигнут — миссия завершена");
+                Debug.Log($"!!Finish '{name}' достигнут — миссия завершена!!");
                 break;
 
             case MarkerType.Checkpoint:
-                Debug.Log($"🟡 Checkpoint '{name}' достигнут");
+                Debug.Log($"Checkpoint '{name}' достигнут");
                 break;
         }
 

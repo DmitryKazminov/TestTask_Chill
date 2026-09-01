@@ -29,10 +29,9 @@ public class RouteNavigationController : MonoBehaviour
     [Header("Visual")]
     public float heightOffset = 0.5f;
 
-    // --- Private ---
     private readonly List<GameObject> pooledArrows = new List<GameObject>();
     private readonly List<Renderer[]> pooledRenderers = new List<Renderer[]>();
-    private MaterialPropertyBlock propertyBlock;   // создаём НЕ здесь
+    private MaterialPropertyBlock propertyBlock;
 
     private void Awake()
     {
@@ -47,8 +46,6 @@ public class RouteNavigationController : MonoBehaviour
         fadeDistance = Mathf.Max(0.1f, fadeDistance);
         fadeInDistance = Mathf.Max(0.1f, fadeInDistance);
 
-        // Важно: НЕ вызываем EnsureArrowPool() здесь!
-        // Пул создаём только в Awake / когда реально нужно.
     }
 
     private void Update()
@@ -161,7 +158,6 @@ public class RouteNavigationController : MonoBehaviour
             pooledRenderers.Add(renderers);
         }
 
-        // Удаляем лишние (если уменьшили maxVisibleArrows)
         while (pooledArrows.Count > maxVisibleArrows)
         {
             int last = pooledArrows.Count - 1;
@@ -240,14 +236,12 @@ public class RouteNavigationController : MonoBehaviour
     {
         const float minVisibleAlpha = 0.35f;
 
-        // 1. Ближняя зона — мягкое затухание, но не полный обрыв видимости.
         if (distanceAhead <= fadeDistance)
         {
             float alpha = Mathf.Clamp01(distanceAhead / fadeDistance);
             return Mathf.Max(alpha, minVisibleAlpha);
         }
 
-        // 2. Дальняя зона — мягкое исчезновение, но без полного вырезания.
         float maxWindow = (maxVisibleArrows - 1) * arrowSpacing;
         float fadeInStart = maxWindow - fadeInDistance;
 
@@ -257,7 +251,6 @@ public class RouteNavigationController : MonoBehaviour
             return Mathf.Max(alpha, minVisibleAlpha);
         }
 
-        // 3. Середина — полностью видима.
         return 1f;
     }
 
