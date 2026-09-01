@@ -31,6 +31,10 @@ public class SimpleCarController : MonoBehaviour
     public float roadRespawnHeightOffset = 1.25f;
     public string roadObjectName = "Road";
 
+    [Header("Visual state")]
+    public GameObject playerArmatureInCar;
+    public string playerArmatureInCarName = "PlayerArmature_inCar";
+
     private Rigidbody rb;
     private Transform roadTransform;
     private bool isPlayerInCar = false;
@@ -189,6 +193,18 @@ public class SimpleCarController : MonoBehaviour
     {
         isPlayerInCar = value;
 
+        if (playerArmatureInCar == null)
+            playerArmatureInCar = FindPlayerArmatureInCar();
+
+        if (playerArmatureInCar != null)
+        {
+            if (!playerArmatureInCar.activeSelf)
+                playerArmatureInCar.SetActive(true);
+
+            if (!value)
+                playerArmatureInCar.SetActive(false);
+        }
+
         if (!value)
         {
             rearLeft.motorTorque = 0;
@@ -200,5 +216,24 @@ public class SimpleCarController : MonoBehaviour
             frontLeft.steerAngle = 0;
             frontRight.steerAngle = 0;
         }
+    }
+
+    private GameObject FindPlayerArmatureInCar()
+    {
+        GameObject found = GameObject.Find(playerArmatureInCarName);
+        if (found != null)
+            return found;
+
+        GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+        foreach (GameObject candidate in allObjects)
+        {
+            if (candidate == null)
+                continue;
+
+            if (candidate.name == playerArmatureInCarName)
+                return candidate;
+        }
+
+        return null;
     }
 }
