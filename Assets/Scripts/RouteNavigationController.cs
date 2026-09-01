@@ -200,7 +200,7 @@ public class RouteNavigationController : MonoBehaviour
 
         for (int i = 0; i < pooledArrows.Count; i++)
         {
-            float targetDistance = visibleStartDistance - i * arrowSpacing;
+            float targetDistance = visibleStartDistance + i * arrowSpacing;
             GameObject arrow = pooledArrows[i];
 
             if (arrow == null) continue;
@@ -215,14 +215,14 @@ public class RouteNavigationController : MonoBehaviour
             Vector3 localDirection = currentPath.Path.GetDirectionAtDistance(targetDistance);
 
             Vector3 point = currentPath.LocalToWorld(localPoint);
-            Vector3 direction = -currentPath.transform.TransformDirection(localDirection);
+            Vector3 direction = currentPath.transform.TransformDirection(localDirection);
 
             if (direction.sqrMagnitude < 0.0001f)
-                direction = Vector3.back;
+                direction = Vector3.forward;
 
             arrow.transform.position = point + Vector3.up * heightOffset;
             Quaternion pathRotation = Quaternion.LookRotation(direction, Vector3.up);
-            arrow.transform.rotation = pathRotation * Quaternion.Euler(-90f, 0f, 0f);
+            arrow.transform.rotation = pathRotation * Quaternion.Euler(90f, 0f, 0f);
 
             float distanceAhead = Mathf.Max(0f, targetDistance - playerDistance);
             float alpha = GetArrowAlpha(distanceAhead);
