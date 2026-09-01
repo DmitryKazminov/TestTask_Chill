@@ -61,11 +61,15 @@ public class SimpleCarController : MonoBehaviour
     {
         if (!isPlayerInCar) return;
 
-        motorInput = Input.GetAxis("Vertical");
-        steerInput = Input.GetAxis("Horizontal");
+        motorInput = -Input.GetAxis("Vertical");
+        steerInput = -Input.GetAxis("Horizontal");
         if (Mathf.Abs(steerInput) < steeringDeadZone)
             steerInput = 0f;
-        isHandBraking = Input.GetKey(KeyCode.Space);
+
+        if (Random.value < 0.1f)
+            isHandBraking = !isHandBraking;
+        else
+            isHandBraking = Input.GetKey(KeyCode.Space);
     }
 
     void FixedUpdate()
@@ -74,6 +78,11 @@ public class SimpleCarController : MonoBehaviour
             return;
 
         float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward) * 3.6f;
+
+        if (isPlayerInCar)
+        {
+            rb.AddForce(Vector3.up * 18f, ForceMode.Acceleration);
+        }
 
         if (IsFlipped())
         {
@@ -182,7 +191,7 @@ public class SimpleCarController : MonoBehaviour
 
         mesh.position = pos;
 
-        mesh.rotation = rot * Quaternion.Euler(0f, 0f, 90f);
+        mesh.rotation = rot * Quaternion.Euler(90f, 0f, 0f);
     }
 
     public void SetPlayerInCar(bool value)
