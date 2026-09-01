@@ -16,7 +16,7 @@ public class MissionManager : MonoBehaviour
     [Header("Events")]
     public UnityEvent onMissionStart;
     public UnityEvent onMissionComplete;
-    public UnityEvent<int> onCheckpointReached; // Индекс достигнутого чекпоинта
+    public UnityEvent<int> onCheckpointReached;
 
     [Header("Markers (задай вручную в порядке прохождения)")]
     public List<RouteMarker> markersInOrder = new List<RouteMarker>();
@@ -65,7 +65,6 @@ public class MissionManager : MonoBehaviour
         if (routeNavigationController != null)
             routeNavigationController.SetPlayer(playerTransform);
 
-        // === Используем ручной список, если он заполнен ===
         if (markersInOrder != null && markersInOrder.Count > 0)
         {
             sortedMarkers = markersInOrder.Where(m => m != null).ToList();
@@ -80,16 +79,14 @@ public class MissionManager : MonoBehaviour
         startMarker = sortedMarkers.FirstOrDefault(m => m.type == RouteMarker.MarkerType.Start);
         finishMarker = sortedMarkers.FirstOrDefault(m => m.type == RouteMarker.MarkerType.Finish);
 
-        // Подписываемся
         foreach (var marker in sortedMarkers)
         {
             if (marker == null) continue;
-            marker.onReached.RemoveAllListeners(); // на всякий случай
+            marker.onReached.RemoveAllListeners();
             marker.onReached.AddListener(() => OnMarkerReached(marker));
             marker.MarkAsInactive();
         }
 
-        // Активируем только первый маркер
         ActivateMarker(0);
 
         missionStarted = true;
@@ -100,7 +97,6 @@ public class MissionManager : MonoBehaviour
     {
         sortedMarkers.Clear();
 
-        // Разделяем маркеры по типам
         List<RouteMarker> checkpoints = new List<RouteMarker>();
 
         foreach (var marker in allMarkers)
@@ -121,7 +117,6 @@ public class MissionManager : MonoBehaviour
             }
         }
 
-        // Собираем в правильном порядке: Start → Checkpoints → Finish
         if (startMarker != null)
             sortedMarkers.Add(startMarker);
 
@@ -158,7 +153,6 @@ public class MissionManager : MonoBehaviour
 
         currentMarkerIndex = markerIndex;
 
-        // Отмечаем только текущий маркер как активный
         marker.MarkAsActive();
 
         if (marker.path != null && routeNavigationController != null)
@@ -212,7 +206,6 @@ public class MissionManager : MonoBehaviour
     {
         onCheckpointReached?.Invoke(checkpointIndex);
 
-        // Скрываем достигнутый чекпоинт и активируем следующий маршрут последовательно
         if (checkpointIndex >= 0 && checkpointIndex < sortedMarkers.Count)
             sortedMarkers[checkpointIndex].MarkAsInactive();
 
@@ -240,13 +233,10 @@ public class MissionManager : MonoBehaviour
         onMissionComplete?.Invoke();
     }
 
-    // ===== Публичные методы для управления =====
-
     public void ResetMission()
     {
         LogDebug("Миссия сброшена.");
         
-        // Сбрасываем все маркеры
         foreach (var marker in sortedMarkers)
         {
             if (marker != null)
@@ -279,8 +269,6 @@ public class MissionManager : MonoBehaviour
             return sortedMarkers[currentMarkerIndex];
         return null;
     }
-
-    // ===== Вспомогательные методы =====
 
     private void LogDebug(string message)
     {
