@@ -23,6 +23,12 @@ public class SimpleCarController : MonoBehaviour
     public float speedLimitRangeKmh = 5f;
     public float steeringDeadZone = 0.05f;
 
+    [Header("Recovery")]
+    public float flipRecoveryUpDotThreshold = 0.25f;
+    public float flipRecoveryMinSpeed = 5f;
+    public float flipRecoveryTorque = 30f;
+    public float flipRecoveryLiftForce = 12f;
+
     private Rigidbody rb;
     private bool isPlayerInCar = false;
 
@@ -59,10 +65,30 @@ public class SimpleCarController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!isPlayerInCar || rb == null || frontLeft == null || frontRight == null || rearLeft == null || rearRight == null)
+        if (rb == null || frontLeft == null || frontRight == null || rearLeft == null || rearRight == null)
             return;
 
         float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward) * 3.6f;
+
+        if (IsFlipped() && Mathf.Abs(forwardSpeed) < flipRecoveryMinSpeed)
+        {
+            Vector3 recoveryAxis = Vector3.Cross(transform.up, Vector3.up);
+            if (recoveryAxis.sqrMagnitude > 0.0001f)
+            {
+                rb.AddTorque(recoveryAxis.normalized * flipRecoveryTorque, ForceMode.Acceleration);
+            }
+
+            rb.AddForce(Vector3.up * flipRecoveryLiftForce, ForceMode.Acceleration);
+        }
+
+        if (!isPlayerInCar)
+        {
+            UpdateWheel(frontLeft, frontLeftMesh);
+            UpdateWheel(frontRight, frontRightMesh);
+            UpdateWheel(rearLeft, rearLeftMesh);
+            UpdateWheel(rearRight, rearRightMesh);
+            return;
+        }
 
         float motor = maxMotorTorque * motorInput;
         if (motorInput > 0f && forwardSpeed > maxSpeedKmh)
@@ -89,7 +115,11 @@ public class SimpleCarController : MonoBehaviour
         UpdateWheel(frontRight, frontRightMesh);
         UpdateWheel(rearLeft, rearLeftMesh);
         UpdateWheel(rearRight, rearRightMesh);
+    }
 
+    private bool IsFlipped()
+    {
+        return Vector3.Dot(transform.up, Vector3.up) < flipRecoveryUpDotThreshold;
     }
 
     void ApplyBrake(WheelCollider col, float force)
