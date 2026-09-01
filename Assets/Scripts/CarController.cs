@@ -28,8 +28,8 @@ public class SimpleCarController : MonoBehaviour
     public float flipRecoveryMinSpeed = 5f;
     public float flipRecoveryTorque = 30f;
     public float flipRecoveryLiftForce = 12f;
-    public string roadObjectName = "Road";
     public float roadRespawnHeightOffset = 1.25f;
+    public string roadObjectName = "Road";
 
     private Rigidbody rb;
     private Transform roadTransform;
