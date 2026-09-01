@@ -28,8 +28,11 @@ public class SimpleCarController : MonoBehaviour
     public float flipRecoveryMinSpeed = 5f;
     public float flipRecoveryTorque = 30f;
     public float flipRecoveryLiftForce = 12f;
+    public string roadObjectName = "Road";
+    public float roadRespawnHeightOffset = 1.25f;
 
     private Rigidbody rb;
+    private Transform roadTransform;
     private bool isPlayerInCar = false;
 
     private float motorInput;
@@ -45,6 +48,8 @@ public class SimpleCarController : MonoBehaviour
             enabled = false;
             return;
         }
+
+        FindRoadTransform();
 
         rb.isKinematic = false;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -70,15 +75,21 @@ public class SimpleCarController : MonoBehaviour
 
         float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward) * 3.6f;
 
-        if (IsFlipped() && Mathf.Abs(forwardSpeed) < flipRecoveryMinSpeed)
+        if (IsFlipped())
         {
-            Vector3 recoveryAxis = Vector3.Cross(transform.up, Vector3.up);
-            if (recoveryAxis.sqrMagnitude > 0.0001f)
-            {
-                rb.AddTorque(recoveryAxis.normalized * flipRecoveryTorque, ForceMode.Acceleration);
-            }
+            if (TryTeleportToRoad())
+                return;
 
-            rb.AddForce(Vector3.up * flipRecoveryLiftForce, ForceMode.Acceleration);
+            if (Mathf.Abs(forwardSpeed) < flipRecoveryMinSpeed)
+            {
+                Vector3 recoveryAxis = Vector3.Cross(transform.up, Vector3.up);
+                if (recoveryAxis.sqrMagnitude > 0.0001f)
+                {
+                    rb.AddTorque(recoveryAxis.normalized * flipRecoveryTorque, ForceMode.Acceleration);
+                }
+
+                rb.AddForce(Vector3.up * flipRecoveryLiftForce, ForceMode.Acceleration);
+            }
         }
 
         if (!isPlayerInCar)
@@ -120,6 +131,40 @@ public class SimpleCarController : MonoBehaviour
     private bool IsFlipped()
     {
         return Vector3.Dot(transform.up, Vector3.up) < flipRecoveryUpDotThreshold;
+    }
+
+    private void FindRoadTransform()
+    {
+        GameObject roadObject = GameObject.Find(roadObjectName);
+        roadTransform = roadObject != null ? roadObject.transform : null;
+    }
+
+    private bool TryTeleportToRoad()
+    {
+        if (roadTransform == null)
+            FindRoadTransform();
+
+        if (roadTransform == null)
+            return false;
+
+        Collider roadCollider = roadTransform.GetComponent<Collider>();
+        if (roadCollider == null)
+            roadCollider = roadTransform.GetComponentInChildren<Collider>();
+
+        if (roadCollider == null)
+            return false;
+
+        Vector3 targetPosition = roadCollider.bounds.center + Vector3.up * (roadRespawnHeightOffset + 0.5f);
+        rb.position = targetPosition;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        Vector3 currentEuler = transform.eulerAngles;
+        currentEuler.x = 0f;
+        currentEuler.z = 0f;
+        transform.rotation = Quaternion.Euler(currentEuler);
+
+        return true;
     }
 
     void ApplyBrake(WheelCollider col, float force)
